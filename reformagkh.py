@@ -8,13 +8,11 @@ import requests #
 import json #
 import getpass #
 
-
 urls = {'login':'https://ais.reformagkh.ru/user/login',
 'organizations':'https://ais.reformagkh.ru/d988/organizations/registry?page=1&start=0&limit=10000',
         'homes':'https://ais.reformagkh.ru/d988/mkd/mkd-disclosure?page=1&start=0&limit=10000',
         'services':'https://ais.reformagkh.ru/d988/mkd-profile/get-communal-services/$building_id$?page=1&start=0&limit=10000',
         'service':'https://ais.reformagkh.ru/d988/mkd-profile/communal-services/$building_id$'}
-
 
 class Reformagkh:
 	def __init__(self, username, **opts):
@@ -44,7 +42,6 @@ class Reformagkh:
 				raise Exception(jresponse['msg'])
 		else:
 			raise Exception("Произошла ошибка при входе в систему", jresponse)
-		
 
 	def user(self):
 		return self.__username
@@ -75,11 +72,11 @@ class Reformagkh:
 		except requests.exceptions.ConnectTimeout as e:
 			raise Exception("Удаленный сервер не отвечает")
 		except Exception as e:
-			raise Exception("Необрабатываетмая ошибка при попытке получения списка организаций")
+			raise Exception("Необрабатываетмая ошибка при попытке получения списка домов")
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке получения списка организаций", e)
+			raise Exception("Неверный формат ответа с сетвера при попытке получения списка домов", e)
 		if 'success' in jresponse:
 			raise Exception(jresponse)
 		else:
@@ -104,7 +101,7 @@ class Reformagkh:
 		else:
 			raise Exception(jresponse)
 
-	def get_communal_service(self,building_id, service):
+	def communal_service_get(self,building_id, service):
 		try:
 			response = self.__s.get(urls["service"].replace("$building_id$",str(building_id)), params={'serviceId':str(service)})
 		except requests.exceptions.ConnectionError as e:
@@ -133,7 +130,7 @@ class Reformagkh:
 		else:
 			raise Exception(jresponse)
 
-	def set_communal_service(self, building_id, data):
+	def communal_service_set(self, building_id, data):
 		r = lambda x: 'communalService[$]'.replace('$',x)
 		ad = lambda i,n: '[$i][$n]'.replace('$i',str(i)).replace('$n',str(n))
 		new_data = {}
@@ -162,7 +159,6 @@ class Reformagkh:
 		else:
 			raise Exception("Ошибка при обновлении данных по коммунальным услугам", jresponse)
 
-		
 	def communal_service_add_tariff(self,data,startedDate,unit, tariff):
 		#houseCommunalServiceCosts
 		data['houseCommunalServiceCosts'].append({'tariff':tariff,'tariffStartedDate':startedDate, 'unitOfMeasurement':unit})
@@ -171,7 +167,7 @@ class Reformagkh:
 		data['unitOfMeasurement'] = unit
 
 	def communal_service_add_act(self,data,docDate, docNum, docOrg):
-		#houseCommunalServiceCosts
+		#houseCommunalServiceNormativeActs
 		data['houseCommunalServiceNormativeActs'].append({'documentNumber':docNum,'documentDate':docDate, 'documentOrgName':docOrg})
 		data['documentNumber'] = docNum
 		data['documentDate'] = docDate
