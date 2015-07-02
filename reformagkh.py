@@ -132,3 +132,30 @@ class Reformagkh:
 			return ret
 		else:
 			raise Exception(jresponse)
+
+	def set_communal_service(self, building_id, data):
+		r = lambda x: 'communalService[$]'.replace('$',x)
+		ad = lambda i,n: '[$i][$n]'.replace('$i',str(i)).replace('$n',str(n))
+		new_data = {}
+		for i in data:
+			if isinstance(data[i],(list)):
+				for j in range(len(data[i])):
+					for k in data[i][j]:
+						new_data[(r(i)+ad(j,k))] = data[i][j][k]
+			else:
+				new_data[r(i)] = data[i]
+		new_data['serviceId'] = data['id']
+		try:
+			response = self.__s.post(urls["service"].replace("$building_id$",str(building_id)), data = new_data)
+		except requests.exceptions.ConnectionError as e:
+			raise Exception("Произошла ошибка при подключении, проверте наличие интернете")
+		except requests.exceptions.ConnectTimeout as e:
+			raise Exception("Удаленный сервер не отвечает")
+		except Exception as e:
+			raise Exception("Необрабатываетмая ошибка при попытке получения списка коммунальных ресурсов")
+		print(response.text)
+		
+
+
+
+
