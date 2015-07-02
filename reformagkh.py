@@ -153,9 +153,29 @@ class Reformagkh:
 			raise Exception("Удаленный сервер не отвечает")
 		except Exception as e:
 			raise Exception("Необрабатываетмая ошибка при попытке получения списка коммунальных ресурсов")
-		print(response.text)
-		
+		try:
+			jresponse = json.loads(response.text)
+		except Exception as e:
+			raise Exception("Неверный формат ответа с сетвера при попытке получения списка коммунальных ресурсов", e)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных по коммунальным услугам", jresponse)
 
+		
+	def communal_service_add_tariff(self,data,startedDate,unit, tariff):
+		#houseCommunalServiceCosts
+		data['houseCommunalServiceCosts'].append({'tariff':tariff,'tariffStartedDate':startedDate, 'unitOfMeasurement':unit})
+		data['tariff'] = tariff
+		data['tariffStartedDate'] = startedDate
+		data['unitOfMeasurement'] = unit
+
+	def communal_service_add_act(self,data,docDate, docNum, docOrg):
+		#houseCommunalServiceCosts
+		data['houseCommunalServiceNormativeActs'].append({'documentNumber':docNum,'documentDate':docDate, 'documentOrgName':docOrg})
+		data['documentNumber'] = docNum
+		data['documentDate'] = docDate
+		data['documentOrgName'] = docOrg
 
 
 
