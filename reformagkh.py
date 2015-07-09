@@ -10,7 +10,8 @@ import getpass #
 
 urls = {'login':'https://ais.reformagkh.ru/user/login',
 'organizations':'https://ais.reformagkh.ru/d988/organizations/registry?page=1&start=0&limit=10000',
-        'homes':'https://ais.reformagkh.ru/d988/mkd/mkd-disclosure?page=1&start=0&limit=10000',
+        'homes':'https://ais.reformagkh.ru/d988/mkd/mkd-disclosure?page=1&start=0&limit=3000',
+        #'homes':'https://ais.reformagkh.ru/d988/mkd/mkd-disclosure?page=1&start=0&limit=10000',
         'services':'https://ais.reformagkh.ru/d988/mkd-profile/get-communal-services/$building_id$?page=1&start=0&limit=10000',
         'service':'https://ais.reformagkh.ru/d988/mkd-profile/communal-services/$building_id$'}
 
@@ -36,7 +37,7 @@ class Reformagkh:
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке входа в систему")
+			raise Exception("Неверный формат ответа с сервера при попытке входа в систему")
 		if jresponse["success"]:
 			if 'msg' in jresponse:
 				raise Exception(jresponse['msg'])
@@ -58,7 +59,7 @@ class Reformagkh:
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке получения списка организаций")
+			raise Exception("Неверный формат ответа с сервера при попытке получения списка организаций")
 		if 'success' in jresponse:
 			raise Exception(jresponse)
 		else:
@@ -76,7 +77,7 @@ class Reformagkh:
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке получения списка домов", e)
+			raise Exception("Неверный формат ответа с сервера при попытке получения списка домов", e)
 		if 'success' in jresponse:
 			raise Exception(jresponse)
 		else:
@@ -95,7 +96,7 @@ class Reformagkh:
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке получения списка коммунальных ресурсов", e)
+			raise Exception("Неверный формат ответа с сервера при попытке получения списка коммунальных ресурсов", e)
 		if jresponse['success']:
 			return [{'house':x['house'],'id':x['id'],'id':x['id'],'type':x['textType'],'typeid':x['type'],'statusid':x['fillingFact'],'status':x['textFilling']} for x in jresponse['data']["data"]]
 		else:
@@ -113,7 +114,7 @@ class Reformagkh:
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке получения списка коммунальных ресурсов", e)
+			raise Exception("Неверный формат ответа с сервера при попытке получения списка коммунальных ресурсов", e)
 		if jresponse['success']:
 			ret = {}
 			for i in jresponse['data']:
@@ -153,7 +154,7 @@ class Reformagkh:
 		try:
 			jresponse = json.loads(response.text)
 		except Exception as e:
-			raise Exception("Неверный формат ответа с сетвера при попытке получения списка коммунальных ресурсов", e)
+			raise Exception("Неверный формат ответа с сервера при попытке получения списка коммунальных ресурсов", e)
 		if jresponse['success']:
 			return True
 		else:
