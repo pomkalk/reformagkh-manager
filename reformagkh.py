@@ -16,7 +16,18 @@ urls = {'login':'https://ais.reformagkh.ru/user/login',
         'service':'https://ais.reformagkh.ru/d988/mkd-profile/communal-services/$building_id$',
 		'house_profile':'https://ais.reformagkh.ru/d988/mkd-passport/overview/$building_id$',
 		'emergency_set_status':'https://ais.reformagkh.ru/d988/mkd/emergency-set-status/$building_id$',
-		'constructive_elements':'https://ais.reformagkh.ru/d988/mkd-passport/constructive-elements/$building_id$'
+		'constructive_elements':'https://ais.reformagkh.ru/d988/mkd-passport/constructive-elements/$building_id$',
+		'common_properties':'https://ais.reformagkh.ru/d988/mkd-profile/common-properties/$building_id$',
+		'common_properties_reg':'https://ais.reformagkh.ru/d988/mkd-profile/common-properties-registry/$building_id$?page=1&start=0&limit=10000',
+		'get_overhaul_overview':'https://ais.reformagkh.ru/d988/mkd-profile/get-overhaul-overview/$building_id$',
+		'save_overhaul_overview':'https://ais.reformagkh.ru/d988/mkd-profile/save-overhaul-overview/$building_id$',
+		'file_up':'https://ais.reformagkh.ru/files/up/',
+		'file_info':'https://ais.reformagkh.ru/files/info/',
+		'general_meeting_list':'https://ais.reformagkh.ru/d988/mkd-profile/general-meeting-list/8978890?_dc=1439430836865&page=1&start=0&limit=25',
+		'save_general_meeting':'https://ais.reformagkh.ru/d988/mkd-profile/save-general-meeting/$building_id$',
+		'housing_services_registry':'https://ais.reformagkh.ru/d988/mkd-profile/housing-services-registry/$building_id$?_dc=1439453581117&page=1&start=0&limit=100',
+		'stop_housing_services_management':'https://ais.reformagkh.ru/d988/mkd-profile/stop-housing-services-management',
+		'housing_service':'https://ais.reformagkh.ru/d988/mkd-profile/housing-service/$building_id$'
         }
 
 class Reformagkh:
@@ -205,6 +216,9 @@ class Reformagkh:
 							ret[i[13:-1]].append(ret_in)
 					else:
 						ret[i[13:-1]] = jresponse['data'][i]
+				else:
+					if i=='isAlarm':
+						ret['#isAlarm'] = jresponse['data'][i]
 			return ret
 		else:
 			raise Exception(jresponse)
@@ -221,8 +235,6 @@ class Reformagkh:
 						new_data[(r(i)+ad(j,k))] = data[i][j][k]
 			else:
 				new_data[r(i)] = data[i]
-		
-
 		try:
 			response = self.__s.post(urls["house_profile"].replace("$building_id$",str(building_id)), data = new_data)
 		except requests.exceptions.ConnectionError as e:
@@ -330,15 +342,210 @@ class Reformagkh:
 		else:
 			raise Exception("Ошибка при обновлении данных по конструктивных элементов", jresponse)
 
+#commonMeetingProtocolFile
+#upload_commonMeetingProtocolFile_file
+#save_general_meeting
 
 
-#HouseProfileRevision[houseRoofs]
-#HouseProfileRevision[houseProfile][wallMaterial]
+	def general_meeting_set(self,building_id, number, date, file_name, file_path):
+		param_string = '[{"commonMeetingProtocolNumber":"$number$","commonMeetingProtocolDate":"$date$T00:00:00","commonMeetingProtocolFile":"$file_id$","id":""}]'
+		response = self.__s.post(urls["file_up"], data={'commonMeetingProtocolFile':''}, files={'upload_commonMeetingProtocolFile_file':[file_name,open(file_path,'rb')]})
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			new_data = {}
+			new_data['data'] = param_string.replace('$number$',str(number)).replace('$file_id$',str(jresponse['data']['id']))
+			new_data['combobox-1479-inputEl'] = 25
+			new_data['hasCommonMeeting'] = 462
+			sd = date.split('.')
+			sd = sd[2]+'-'+sd[1]+'-'+sd[0]
+			new_data['data'] = new_data['data'].replace('$date$',sd)
+			#response = self.__s.post(urls["save_general_meeting"].replace("$building_id$",str(building_id)), data = new_data)
+			response = self.__s.post(urls["save_general_meeting"].replace("$building_id$",str(building_id)),headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}, data = new_data)
+			jresponse = json.loads(response.text)
+			if jresponse['success']:
+				return True
+			else:
+				raise Exception("Ошибка при обновлении данных СОБРАНИЯМ", jresponse)
 
 
+	def general_meeting_set_no(self, building_id):
+		new_data = {}
+		new_data['data'] = []
+		new_data['combobox-1479-inputEl'] = 25
+		new_data['hasCommonMeeting'] = 463
+		response = self.__s.post(urls["save_general_meeting"].replace("$building_id$",str(building_id)), data = new_data)
+		#response = self.__s.post(urls["save_general_meeting"].replace("$building_id$",str(building_id)),headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}, data = new_data)
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных СОБРАНИЯМ", jresponse)				
 
 
+#housing_services_registry
 
+	def housing_services_registry(self,building_id):
+		response = self.__s.get(urls["housing_services_registry"].replace("$building_id$",str(building_id)))
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			ret = []
+			for i in jresponse['data']['data']:
+				ret.append({'id':i['id'], 'serviceName':i['serviceName']})
+			return ret
+
+#stop_housing_services_management
+
+	def stop_housing_services_management(self, service_id):
+		new_data = {}
+		new_data['serviceId'] = service_id
+		new_data['stopReasonType'] = 2
+		response = self.__s.post(urls["stop_housing_services_management"], data = new_data)
+		#response = self.__s.post(urls["save_general_meeting"].replace("$building_id$",str(building_id)),headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}, data = new_data)
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных СОБРАНИЯМ", jresponse)	
+
+
+#housing_service
+
+	def housing_service(self,building_id, name, price):
+		r = lambda x: x[1:] if x[0]=='#' else 'houseService[$]'.replace('$',x)
+		ad = lambda i,n: '[$i][$n]'.replace('$i',str(i)).replace('$n',str(n))
+		new_data = {}
+
+		data = {}
+		data['name'] = 410 
+		data['nameOther'] = name 
+		data['houseServiceCosts'] = [{'id':'','year':'2015','planCostPerUnit': price}]
+
+		for i in data:
+			if isinstance(data[i],(list)):
+				for j in range(len(data[i])):
+					for k in data[i][j]:
+						new_data[(r(i)+ad(j,k))] = data[i][j][k]
+			else:
+				new_data[r(i)] = data[i]
+			
+		response = self.__s.post(urls["housing_service"].replace("$building_id$",str(building_id)), data = new_data)
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных SERVICES", jresponse)
+
+##################
+##################
+##################
+# - Тут список промежуточных функций!
+##################
+
+	def common_properties_get(self,building_id):
+		try:
+			response = self.__s.get(urls["common_properties"].replace("$building_id$",str(building_id)))
+		except requests.exceptions.ConnectionError as e:
+			raise Exception("Произошла ошибка при подключении, проверте наличие интернете")
+		except requests.exceptions.ConnectTimeout as e:
+			raise Exception("Удаленный сервер не отвечает")
+		except Exception as e:
+			raise Exception("Необрабатываетмая ошибка при попытке получения конструктивных элементов")
+		try:
+			jresponse = json.loads(response.text)
+		except Exception as e:
+			raise Exception("Неверный формат ответа с сервера при попытке получения конструктивных элементов", e)
+		if jresponse['success']:
+			ret = {}
+			for i in jresponse['data']:
+				if isinstance(jresponse['data'][i],(list)):
+					ret[i[13:-1]] = []
+					for j in jresponse['data'][i]:
+						ret_in = {}
+						for k in j:
+							ret_in[k] = j[k]
+						ret[i[13:-1]].append(ret_in)
+				else:
+					ret[i[13:-1]] = jresponse['data'][i]
+			return ret
+		else:
+			raise Exception(jresponse)
+
+	def common_properties_get_reg(self,building_id):
+		try:
+			response = self.__s.get(urls["common_properties_reg"].replace("$building_id$",str(building_id)))
+		except requests.exceptions.ConnectionError as e:
+			raise Exception("Произошла ошибка при подключении, проверте наличие интернете")
+		except requests.exceptions.ConnectTimeout as e:
+			raise Exception("Удаленный сервер не отвечает")
+		except Exception as e:
+			raise Exception("Необрабатываетмая ошибка при попытке получения конструктивных элементов")
+		try:
+			jresponse = json.loads(response.text)
+		except Exception as e:
+			raise Exception("Неверный формат ответа с сервера при попытке получения конструктивных элементов", e)
+		if jresponse['success']:
+			return jresponse['data']
+		else:
+			raise Exception(jresponse)
+
+	def common_properties_set_no(self, building_id):
+		new_data = {'hasCommonProperties':463, 'id':0}
+		try:
+			response = self.__s.post(urls["common_properties"].replace("$building_id$",str(building_id)), headers={'Content-Type':'application/json; charset=UTF-8'}, data = new_data)
+
+		except requests.exceptions.ConnectionError as e:
+			raise Exception("Произошла ошибка при подключении, проверте наличие интернете")
+		except requests.exceptions.ConnectTimeout as e:
+			raise Exception("Удаленный сервер не отвечает")
+		except Exception as e:
+			raise Exception("Необрабатываетмая ошибка при попытке получения списка конструктивных элементов")
+		try:
+			jresponse = json.loads(response.text)
+		except Exception as e:
+			raise Exception("Неверный формат ответа с сервера при попытке получения общего имущества", e)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных по конструктивных элементов", jresponse)
+
+
+	def get_overhaul_overview(self,building_id):
+		try:
+			response = self.__s.get(urls["get_overhaul_overview"].replace("$building_id$",str(building_id)))
+		except requests.exceptions.ConnectionError as e:
+			raise Exception("Произошла ошибка при подключении, проверте наличие интернете")
+		except requests.exceptions.ConnectTimeout as e:
+			raise Exception("Удаленный сервер не отвечает")
+		except Exception as e:
+			raise Exception("Необрабатываетмая ошибка при попытке получения конструктивных элементов")
+		try:
+			jresponse = json.loads(response.text)
+		except Exception as e:
+			raise Exception("Неверный формат ответа с сервера при попытке получения конструктивных элементов", e)
+		if jresponse['success']:
+			return jresponse['data']
+		else:
+			raise Exception(jresponse)
+
+
+	def set_overhaul_overview_set_no(self, building_id, data):
+		data['hasOverhaulId'] = 463
+		try:
+			response = self.__s.post(urls["save_overhaul_overview"].replace("$building_id$",str(building_id)), data = data)
+		except requests.exceptions.ConnectionError as e:
+			raise Exception("Произошла ошибка при подключении, проверте наличие интернете")
+		except requests.exceptions.ConnectTimeout as e:
+			raise Exception("Удаленный сервер не отвечает")
+		except Exception as e:
+			raise Exception("Необрабатываетмая ошибка при попытке получения списка конструктивных элементов")
+		try:
+			jresponse = json.loads(response.text)
+		except Exception as e:
+			raise Exception("Неверный формат ответа с сервера при попытке получения общего имущества", e)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных по конструктивных элементов", jresponse)
 
 
 """
