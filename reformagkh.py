@@ -27,7 +27,10 @@ urls = {'login':'https://ais.reformagkh.ru/user/login',
 		'save_general_meeting':'https://ais.reformagkh.ru/d988/mkd-profile/save-general-meeting/$building_id$',
 		'housing_services_registry':'https://ais.reformagkh.ru/d988/mkd-profile/housing-services-registry/$building_id$?_dc=1439453581117&page=1&start=0&limit=100',
 		'stop_housing_services_management':'https://ais.reformagkh.ru/d988/mkd-profile/stop-housing-services-management',
-		'housing_service':'https://ais.reformagkh.ru/d988/mkd-profile/housing-service/$building_id$'
+		'housing_service':'https://ais.reformagkh.ru/d988/mkd-profile/housing-service/$building_id$',
+		'elevators':'https://ais.reformagkh.ru/d988/mkd-passport/elevators/$building_id$',
+		'metering_devices':'https://ais.reformagkh.ru/d988/mkd-profile/metering-devices/$building_id$',
+		'engineering_systems':'https://ais.reformagkh.ru/d988/mkd-passport/engineering-systems/$building_id$'
         }
 
 class Reformagkh:
@@ -435,6 +438,70 @@ class Reformagkh:
 		else:
 			raise Exception("Ошибка при обновлении данных SERVICES", jresponse)
 
+#metering_devices
+
+
+	def metering_devices_get(self,building_id):
+		response = self.__s.get(urls["metering_devices"].replace("$building_id$",str(building_id)))
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			return jresponse['data']
+		else:
+			raise Exception(jresponse)
+
+	def metering_devices_set(self, building_id, data):
+		r = lambda x: 'HouseProfileRevision[$]'.replace('$',x)
+		r2 = lambda x: 'HouseProfileRevision[houseProfile][$]'.replace('$',x)
+		ad = lambda i,n: '[$i][$n]'.replace('$i',str(i)).replace('$n',str(n))
+		new_data = {}
+		for i in data:
+			if isinstance(data[i],(list)):
+				for j in range(len(data[i])):
+					for k in data[i][j]:
+						new_data[(i+ad(j,k))] = data[i][j][k]
+			else:
+				new_data[i] = data[i]
+		response = self.__s.post(urls["metering_devices"].replace("$building_id$",str(building_id)), data = new_data)
+		jresponse = json.loads(response.text)
+
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных по конструктивных элементов", jresponse)
+
+#engineering_systems
+	def engineering_systems_get(self,building_id):
+		response = self.__s.get(urls["engineering_systems"].replace("$building_id$",str(building_id)))
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			ret = {}
+			for i in jresponse['data']:
+				ret[i[19:-1]] = jresponse['data'][i]
+			return ret
+		else:
+			raise Exception(jresponse)
+
+
+	def engineering_systems_set(self, building_id, data):
+		r = lambda x: 'engineeringSystems[$]'.replace('$',x)
+		ad = lambda i,n: '[$i][$n]'.replace('$i',str(i)).replace('$n',str(n))
+		new_data = {}
+		for i in data:
+			if isinstance(data[i],(list)):
+				for j in range(len(data[i])):
+					for k in data[i][j]:
+						new_data[(r(i)+ad(j,k))] = data[i][j][k]
+			else:
+				new_data[r(i)] = data[i]
+		response = self.__s.post(urls["engineering_systems"].replace("$building_id$",str(building_id)), data = new_data)
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных по коммунальным услугам", jresponse)
+
+
+
 ##################
 ##################
 ##################
@@ -542,6 +609,25 @@ class Reformagkh:
 			jresponse = json.loads(response.text)
 		except Exception as e:
 			raise Exception("Неверный формат ответа с сервера при попытке получения общего имущества", e)
+		if jresponse['success']:
+			return True
+		else:
+			raise Exception("Ошибка при обновлении данных по конструктивных элементов", jresponse)
+
+
+
+	def elevators_get(self,building_id):
+		response = self.__s.get(urls["elevators"].replace("$building_id$",str(building_id)))
+		jresponse = json.loads(response.text)
+		if jresponse['success']:
+			return jresponse['data']
+
+
+	def elevators_set_no(self, building_id):
+		data = {}
+		data['houseProfile[houseProfile][hasLifts]'] = 463
+		response = self.__s.post(urls["elevatorsd"].replace("$building_id$",str(building_id)), data = data)
+		jresponse = json.loads(response.text)
 		if jresponse['success']:
 			return True
 		else:
